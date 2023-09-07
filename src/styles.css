@@ -18,7 +18,8 @@
     position: absolute;
     width: 10px;
     height: 10px;
-    background-color: #00f;
+    background-color: rgb(13, 255, 0);
+    border: 1px solid #000;
 }
 
 .food {

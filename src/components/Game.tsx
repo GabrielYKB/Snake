@@ -9,6 +9,20 @@ const Game = () => {
     const [isGameOver, setIsGameOver] = useState(false);
     const [isGameStarted, setIsGameStarted] = useState(false);
     const [score, setScore] = useState(0);
+
+    // Define an array of colors for the snake
+    const snakeColors = [
+        "rgb(13, 255, 0)",
+        "rgb(0, 255, 0)",
+        // Add more colors as needed
+    ];
+
+    // Track the current snake color
+    const [currentSnakeColor, setCurrentSnakeColor] = useState<string>(
+        snakeColors[0]
+    );
+
+    // Declare leaderboardData state and setLeaderboardData function
     const [leaderboardData, setLeaderboardData] = useState<
         { name: string; score: number }[]
     >([]);
@@ -100,11 +114,17 @@ const Game = () => {
                 setFood(generateRandomFoodPosition(snake));
 
                 // Grow the Snake by adding a new segment
-                const newSnake = [...snake, newHead];
+                const newSnake = [...snake, ...[newHead]];
                 setSnake(newSnake);
 
                 // Increase the score
                 setScore(score + 100);
+
+                // Update the snake's color to the next color in the array
+                const nextColorIndex =
+                    (snakeColors.indexOf(currentSnakeColor) + 1) %
+                    snakeColors.length;
+                setCurrentSnakeColor(snakeColors[nextColorIndex]);
             } else {
                 // Remove the tail segment
                 const newSnake = [...snake];
@@ -116,17 +136,25 @@ const Game = () => {
         return () => {
             clearInterval(gameInterval);
         };
-    }, [snake, direction, isGameStarted, isGameOver, food, score]);
+    }, [
+        snake,
+        direction,
+        isGameStarted,
+        isGameOver,
+        food,
+        score,
+        currentSnakeColor,
+    ]);
 
     const startGame = () => {
         setIsGameStarted(true);
     };
 
     const isCollidingWithSnake = (head: { x: number; y: number }) => {
-        // Check if the head collides with any segment
-        return snake.some(
-            (segment) => segment.x === head.x && segment.y === head.y
-        );
+        // Check if the head collides with any segment (excluding the last segment)
+        return snake
+            .slice(0, -1)
+            .some((segment) => segment.x === head.x && segment.y === head.y);
     };
 
     const generateRandomFoodPosition = (
@@ -176,7 +204,11 @@ const Game = () => {
             )}
             {isGameOver && <div className="game-over">Game Over</div>}
             <div className="score">Score: {score}</div>
-            <GameBoard snake={snake} food={food} />
+            <GameBoard
+                snake={snake}
+                food={food}
+                currentSnakeColor={currentSnakeColor}
+            />
             <Leaderboard leaderboardData={topPlayers} />
         </div>
     );
