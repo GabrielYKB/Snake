@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import GameBoard from "./GameBoard";
 import Leaderboard from "./Leaderboard";
+import PostGameScreen from "./PostGameScreen"; // Import the PostGameScreen component
+import "../styles.css"; // Import your CSS file
 
 const Game = () => {
     const [snake, setSnake] = useState([{ x: 0, y: 0 }]);
@@ -9,6 +11,8 @@ const Game = () => {
     const [isGameOver, setIsGameOver] = useState(false);
     const [isGameStarted, setIsGameStarted] = useState(false);
     const [score, setScore] = useState(0);
+    const [playerName, setPlayerName] = useState("");
+    const [scoreSaved, setScoreSaved] = useState(false);
 
     // Define an array of colors for the snake
     const snakeColors = [
@@ -26,6 +30,15 @@ const Game = () => {
     const [leaderboardData, setLeaderboardData] = useState<
         { name: string; score: number }[]
     >([]);
+
+    // Define the saveScore function here
+    const saveScore = (name: string) => {
+        if (score > 0 && name.trim() !== "") {
+            setLeaderboardData((prevData) => [...prevData, { name, score }]);
+            setPlayerName(name); // Set the playerName when saving the score
+            setScoreSaved(true); // Set scoreSaved to true
+        }
+    };
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -98,13 +111,6 @@ const Game = () => {
                 clearInterval(gameInterval);
                 setIsGameOver(true);
                 updateLeaderboard(); // Update the leaderboard with the current score
-                setTimeout(() => {
-                    setIsGameOver(false);
-                    setSnake([{ x: 0, y: 0 }]);
-                    setDirection("RIGHT");
-                    setScore(0);
-                    setFood(generateRandomFoodPosition(snake)); // Reset food position
-                }, 1000); // Reset the game after 1 second
                 return;
             }
 
@@ -166,26 +172,16 @@ const Game = () => {
                 x: Math.floor(Math.random() * 30) * 10,
                 y: Math.floor(Math.random() * 30) * 10,
             };
-        } while (
-            isCollidingWithSnake(newFoodPosition) ||
-            isSamePosition(newFoodPosition, food)
-        );
+        } while (isCollidingWithSnake(newFoodPosition));
 
         return newFoodPosition;
-    };
-
-    const isSamePosition = (
-        pos1: { x: number; y: number },
-        pos2: { x: number; y: number }
-    ) => {
-        return pos1.x === pos2.x && pos1.y === pos2.y;
     };
 
     const updateLeaderboard = () => {
         if (score > 0) {
             setLeaderboardData((prevData) => [
                 ...prevData,
-                { name: "Player", score }, // You can replace 'Player' with actual names
+                { name: playerName || "Player", score }, // Use playerName if available, or 'Player'
             ]);
         }
     };
@@ -202,13 +198,33 @@ const Game = () => {
                     Start Game
                 </button>
             )}
-            {isGameOver && <div className="game-over">Game Over</div>}
-            <div className="score">Score: {score}</div>
-            <GameBoard
-                snake={snake}
-                food={food}
-                currentSnakeColor={currentSnakeColor}
-            />
+            <div className="game-container">
+                <div className={`overlay ${isGameOver ? "visible" : ""}`}>
+                    {isGameOver && (
+                        <PostGameScreen
+                            score={score}
+                            playerName={playerName}
+                            onSaveScore={saveScore}
+                            onTryAgain={() => {
+                                setPlayerName(""); // Reset playerName
+                                setIsGameOver(false);
+                                setIsGameStarted(false);
+                                setSnake([{ x: 0, y: 0 }]);
+                                setDirection("RIGHT");
+                                setScore(0);
+                                setFood(generateRandomFoodPosition(snake));
+                                setScoreSaved(false); // Reset scoreSaved
+                            }}
+                        />
+                    )}
+                </div>
+                <div className="score">Score: {score}</div>
+                <GameBoard
+                    snake={snake}
+                    food={food}
+                    currentSnakeColor={currentSnakeColor}
+                />
+            </div>
             <Leaderboard leaderboardData={topPlayers} />
         </div>
     );

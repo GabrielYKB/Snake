@@ -1,26 +1,26 @@
-// PostGameScreen.tsx
-
 import React, { useState } from "react";
 
 interface PostGameScreenProps {
     score: number;
+    playerName: string;
     onTryAgain: () => void;
     onSaveScore: (name: string) => void;
 }
 
 const PostGameScreen: React.FC<PostGameScreenProps> = ({
     score,
+    playerName,
     onTryAgain,
     onSaveScore,
 }) => {
-    const [playerName, setPlayerName] = useState("");
+    const [inputName, setInputName] = useState(playerName);
 
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setPlayerName(e.target.value);
+        setInputName(e.target.value);
     };
 
     const handleSaveScore = () => {
-        onSaveScore(playerName);
+        onSaveScore(inputName);
     };
 
     return (
@@ -30,7 +30,7 @@ const PostGameScreen: React.FC<PostGameScreenProps> = ({
             <input
                 type="text"
                 placeholder="Enter your name"
-                value={playerName}
+                value={inputName}
                 onChange={handleNameChange}
             />
             <button onClick={handleSaveScore}>Save Score</button>
