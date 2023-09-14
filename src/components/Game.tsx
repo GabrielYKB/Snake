@@ -13,6 +13,9 @@ const Game = () => {
     const [score, setScore] = useState(0);
     const [playerName, setPlayerName] = useState("");
     const [scoreSaved, setScoreSaved] = useState(false);
+    const [leaderboardData, setLeaderboardData] = useState<
+        { name: string; score: number }[]
+    >([]);
 
     // Define an array of colors for the snake
     const snakeColors = [
@@ -25,20 +28,6 @@ const Game = () => {
     const [currentSnakeColor, setCurrentSnakeColor] = useState<string>(
         snakeColors[0]
     );
-
-    // Declare leaderboardData state and setLeaderboardData function
-    const [leaderboardData, setLeaderboardData] = useState<
-        { name: string; score: number }[]
-    >([]);
-
-    // Define the saveScore function here
-    const saveScore = (name: string) => {
-        if (score > 0 && name.trim() !== "") {
-            setLeaderboardData((prevData) => [...prevData, { name, score }]);
-            setPlayerName(name); // Set the playerName when saving the score
-            setScoreSaved(true); // Set scoreSaved to true
-        }
-    };
 
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
@@ -178,17 +167,17 @@ const Game = () => {
     };
 
     const updateLeaderboard = () => {
-        if (score > 0) {
-            setLeaderboardData((prevData) => [
-                ...prevData,
-                { name: playerName || "Player", score }, // Use playerName if available, or 'Player'
-            ]);
+        if (score > 0 && playerName.trim() !== "") {
+            // Only save the score if playerName is not empty
+            const updatedLeaderboard = [
+                ...leaderboardData,
+                { name: playerName, score },
+            ];
+            updatedLeaderboard.sort((a, b) => b.score - a.score);
+            setLeaderboardData(updatedLeaderboard.slice(0, 10));
+            setScoreSaved(true); // Set scoreSaved to true after saving the score
         }
     };
-
-    const topPlayers = leaderboardData
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 10);
 
     return (
         <div className="game">
@@ -198,13 +187,18 @@ const Game = () => {
                     Start Game
                 </button>
             )}
-            <div className="game-container">
+            <div className={`game-container ${isGameOver ? "game-over" : ""}`}>
+                <GameBoard
+                    snake={snake}
+                    food={food}
+                    currentSnakeColor={currentSnakeColor}
+                />
                 <div className={`overlay ${isGameOver ? "visible" : ""}`}>
                     {isGameOver && (
                         <PostGameScreen
                             score={score}
                             playerName={playerName}
-                            onSaveScore={saveScore}
+                            onSaveScore={updateLeaderboard} // Use updateLeaderboard
                             onTryAgain={() => {
                                 setPlayerName(""); // Reset playerName
                                 setIsGameOver(false);
@@ -218,14 +212,9 @@ const Game = () => {
                         />
                     )}
                 </div>
-                <div className="score">Score: {score}</div>
-                <GameBoard
-                    snake={snake}
-                    food={food}
-                    currentSnakeColor={currentSnakeColor}
-                />
             </div>
-            <Leaderboard leaderboardData={topPlayers} />
+            <div className="score">Score: {score}</div>
+            <Leaderboard leaderboardData={leaderboardData.slice(0, 10)} />
         </div>
     );
 };
